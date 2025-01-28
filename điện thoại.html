@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bốc Lì Xì Của XĐai</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('hinh-nen-tet-2025.jpg') no-repeat center center/cover;
+            overflow: hidden;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin: 10px 20px;
+        }
+
+        h1 {
+            font-size: 2em;
+        }
+
+        h2 {
+            font-size: 1.2em;
+        }
+
+        .envelopes {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .envelope {
+            position: relative;
+            width: 80px;
+            height: 120px;
+            background: red;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .envelope:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .envelope::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 15px;
+            background: gold;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .envelope.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #fff;
+            font-weight: bold;
+            display: none;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 280px;
+            height: 350px;
+            background: #fff;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transition: transform 0.5s ease;
+        }
+
+        .card.active {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .card-header {
+            background: red;
+            color: #fff;
+            font-size: 1.2em;
+            padding: 15px;
+        }
+
+        .card-body {
+            padding: 20px;
+            font-size: 1em;
+            color: #333;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chúc Mừng Năm Mới 🎉</h1>
+    <h1>Xuân Đại gửi đến bạn một bao lì xì</h1>
+    <h2><strong>Bạn có thể chọn 1 bao lì xì trong 5 bao bên dưới</strong></h2>
+    <div class="envelopes">
+        <div class="envelope" data-message="Chúc bạn một năm mới an khang, thịnh vượng, sức khỏe dồi dào, và luôn thành công trong mọi lĩnh vực của cuộc sống. Mong mọi điều tốt đẹp sẽ đến với bạn trong năm mới!"></div>
+        <div class="envelope" data-message="Chúc năm mới của bạn tràn đầy sự an lành, mỗi ngày là một niềm vui, mỗi bước đi là một hành trình hạnh phúc. Cầu chúc bạn và những người thân yêu luôn bình an trong cuộc sống!"></div>
+        <div class="envelope" data-message="Chúc bạn năm mới tiền vào như nước, sự nghiệp hanh thông, cuộc sống đủ đầy, và tràn ngập phú quý!"></div>
+        <div class="envelope" data-message="Chúc bạn một năm đầy năng lượng tích cực, những khởi đầu mới thuận lợi, và cuộc sống luôn tràn ngập ý nghĩa!"></div>
+        <div class="envelope" data-message="Chúc bạn năm mới tràn ngập tiếng cười, niềm vui nối tiếp niềm vui, mọi điều tốt lành đến một cách tự nhiên và ý nghĩa nhất!"></div>
+    </div>
+    <p class="message" id="message"></p>
+
+    <div class="card" id="card">
+        <div class="card-header">Chúc Mừng Năm Mới!</div>
+        <div class="card-body" id="card-body">
+            <p>Chúc bạn một năm mới an khang, thịnh vượng và đầy may mắn!</p>
+        </div>
+    </div>
+
+    <canvas id="fireworks"></canvas>
+
+    <script>
+        const envelopes = document.querySelectorAll('.envelope');
+        const card = document.getElementById('card');
+        const cardBody = document.getElementById('card-body');
+        const canvas = document.getElementById('fireworks');
+        const ctx = canvas.getContext('2d');
+        let hasSelected = false;
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        function createFirework(x, y) {
+            const particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x,
+                    y,
+                    angle: Math.random() * 2 * Math.PI,
+                    speed: Math.random() * 3 + 2,
+                    radius: Math.random() * 3 + 1,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    life: Math.random() * 50 + 50
+                });
+            }
+            return particles;
+        }
+
+        function drawFireworks(fireworks) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            fireworks.forEach((firework, index) => {
+                firework.forEach((particle, i) => {
+                    particle.x += Math.cos(particle.angle) * particle.speed;
+                    particle.y += Math.sin(particle.angle) * particle.speed;
+                    particle.life--;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = particle.color;
+                    ctx.fill();
+                    if (particle.life <= 0) firework.splice(i, 1);
+                });
+                if (firework.length === 0) fireworks.splice(index, 1);
+            });
+            if (fireworks.length > 0) requestAnimationFrame(() => drawFireworks(fireworks));
+        }
+
+        envelopes.forEach((envelope) => {
+            envelope.addEventListener('click', (e) => {
+                if (hasSelected) return;
+                hasSelected = true;
+
+                envelope.classList.add('disabled');
+                const messageText = envelope.getAttribute('data-message');
+                card.classList.add('active');
+                cardBody.innerHTML = `<p>${messageText}</p>`;
+
+                const rect = envelope.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                const fireworks = [createFirework(x, y)];
+                drawFireworks(fireworks);
+            });
+        });
+    </script>
+</body>
+</html>
